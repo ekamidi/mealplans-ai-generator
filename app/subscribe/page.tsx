@@ -39,7 +39,7 @@ async function subscribeToPlan(
     return data;
 }
 
-export default function Subscribe() {
+export default function SubscribePage() {
     const { user } = useUser();
     const router = useRouter();
 

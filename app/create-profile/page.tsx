@@ -5,7 +5,6 @@ import { useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-
 type ApiResponse = {
     message: string;
     error?: string;

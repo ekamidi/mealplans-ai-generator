@@ -31,7 +31,7 @@ async function unsubscribe() {
     return response.json();
 }
 
-export default function Profile() {
+export default function ProfilePage() {
     const { isLoaded, isSignedIn, user } = useUser();
     const queryClient = useQueryClient();
     const router = useRouter();

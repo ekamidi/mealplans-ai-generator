@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
 
     let event: Stripe.Event;
 
+    // Verify Stripe event is legit
     try {
         event = stripe.webhooks.constructEvent(
             body,
@@ -42,7 +43,6 @@ export async function POST(request: NextRequest) {
             default:
                 console.log(`Unhandled event type ${event.type}`);
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch(error: any) {
         return NextResponse.json({ error: error.message }, { status: 400 });
     }
@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({});
 }
 
+// Handler for successful checkout sessions
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
     const userId = session.metadata?.clerkUserId;
 
@@ -74,13 +75,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
                 subscriptionTier: session.metadata?.planType || null
             }
         });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch(error: any) {
         console.log("Prisma update error", error.message);
     }
 }
 
-
+// Handler for failed invoice payments
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     const subId = invoice.account_name as string;
 
@@ -88,6 +88,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
         return;
     }
 
+    // Retrieve userId from subscription ID
     let userId: string | undefined;
     try {
         const profile = await prisma.profile.findUnique({
@@ -104,12 +105,12 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
             return;
         }
         userId = profile.userId;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch(error: any) {
         console.log(error.message);
         return;
     }
 
+    // Call Prisma to update the user record in the DB with payment failure
     try {
         await prisma.profile.update({
             where: { userId: userId },
@@ -117,13 +118,12 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
                 subscriptionActive: false,
             }
         });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch(error: any) {
         console.log(error.message);
     }
 }
 
-
+// Handler for subscription deletions (e.g., cancellations)
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     const subId = subscription.id;
 
@@ -149,6 +149,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
         return;
     }
 
+    // Update Prisma with subscription cancellation
     try {
         await prisma.profile.update({
             where: { userId: userId },
@@ -158,7 +159,6 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
                 subscriptionTier: null,
             }
         });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch(error: any) {
         console.log(error.message);
     }
